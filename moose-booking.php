@@ -8,8 +8,8 @@
  * Author URI: https://github.com/Mikael-Sundstrom
  * Text Domain: moose-booking
  * Domain Path: /languages
- * 
- * License: GPLv3 or later
+ *
+ * License: GPLv3
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  * Requires PHP: 7.4
  * Requires at least: 5.9
@@ -39,7 +39,7 @@ if (is_admin()) {
     $required_files[] = 'includes/menu.php'; // Load admin resources
     $required_files[] = 'includes/hooks-admin.php'; // Load admin hooks
     $required_files[] = 'includes/calendar.php'; // Load calendar functions
-} 
+}
 else {
     $required_files[] = 'includes/hooks-frontend.php'; // Load frontend resources
 }
