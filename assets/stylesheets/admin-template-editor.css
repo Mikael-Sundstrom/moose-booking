@@ -1,0 +1,85 @@
+.moosebooking-calendar {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr); /* 1 för veckonummer + 7 dagar */
+    gap: 5px;
+    max-width: 600px;
+    text-align: center;
+}
+
+.weekday, .weeknumber, .day {
+    padding: 8px;
+    background-color: #f7f7f7;
+    border: 1px solid #ddd;
+}
+
+.day {
+    cursor: pointer;
+}
+
+.day:hover {
+    background-color: #e0f7fa;
+}
+
+.day.empty {
+    background-color: transparent;
+    border: none;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.calendar-header button {
+    padding: 4px 10px;
+}
+
+.moosebooking-calendar .day.unavailable {
+    background-color: #e74c3c; /* Röd bakgrund */
+    color: white;
+}
+
+.moosebooking-calendar .day.custom-day {
+    background-color: #e7b655;
+}
+
+.day.empty {
+    cursor: default;
+}
+
+/* Modal bakgrund */
+#custom-day-modal {
+    display: none; /* Viktigt! Modal dold från början */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Halvmörk bakgrund */
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Själva modalfönstret */
+#custom-day-modal .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+#custom-day-modal h2 {
+    margin-top: 0;
+}
+
+#custom-day-modal button {
+    margin-top: 10px;
+    margin-right: 10px;
+}

@@ -1,0 +1,8 @@
+.wrap {
+    /* background-color: rgb(241, 185, 185); */
+    max-width: 800px;
+}
+
+#toplevel_page_moosebooking ul.wp-submenu li:has(a[href*="page=moosebooking-template-editor"]) {
+    display: none !important;
+}
