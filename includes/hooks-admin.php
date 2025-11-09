@@ -1,159 +1,196 @@
-<?php if (!defined('ABSPATH')) exit;
-
+<?php
 /**
- * includes/admin-hooks.php
  * Handles hooks and logic specific to the WordPress admin panel.
+ *
+ * @file includes/hooks-admin.php
+ * @package moose-booking
  */
 
-add_action('admin_init', function () {
+defined( 'ABSPATH' ) || exit;
 
-    // Register settings for "Email"
-    register_setting('moosebooking_email_settings_group', 'moosebooking_email_to_admin');
-    register_setting('moosebooking_email_settings_group', 'moosebooking_email_message_subject');
-    register_setting('moosebooking_email_settings_group', 'moosebooking_email_user_message');
-    register_setting('moosebooking_email_settings_group', 'moosebooking_email_notify_admin');
+/**
+ * Register plugin settings.
+ */
+add_action(
+	'admin_init',
+	function () {
+		// Email settings.
+		register_setting( 'moosebooking_email_settings_group', 'moosebooking_email_to_admin' );
+		register_setting( 'moosebooking_email_settings_group', 'moosebooking_email_message_subject' );
+		register_setting( 'moosebooking_email_settings_group', 'moosebooking_email_user_message' );
+		register_setting( 'moosebooking_email_settings_group', 'moosebooking_email_notify_admin' );
 
-    // Register settings for "Appearance"
-    register_setting('moosebooking_appearance_settings_group', 'moosebooking_appearance_primary_color');
-    register_setting('moosebooking_appearance_settings_group', 'moosebooking_appearance_calendar_view');
-    register_setting('moosebooking_appearance_settings_group', 'moosebooking_appearance_show_week_numbers');
+		// Appearance settings.
+		register_setting( 'moosebooking_appearance_settings_group', 'moosebooking_appearance_primary_color' );
+		register_setting( 'moosebooking_appearance_settings_group', 'moosebooking_appearance_calendar_view' );
+		register_setting( 'moosebooking_appearance_settings_group', 'moosebooking_appearance_show_week_numbers' );
 
-    // Register settings for "Limits"
-    register_setting('moosebooking_limits_settings_group', 'moosebooking_limits_max_bookings_per_ip');
-    register_setting('moosebooking_limits_settings_group', 'moosebooking_limits_min_hours_before_booking');
-    register_setting('moosebooking_limits_settings_group', 'moosebooking_limits_max_days_ahead');
+		// Limits settings.
+		register_setting( 'moosebooking_limits_settings_group', 'moosebooking_limits_max_bookings_per_ip' );
+		register_setting( 'moosebooking_limits_settings_group', 'moosebooking_limits_min_hours_before_booking' );
+		register_setting( 'moosebooking_limits_settings_group', 'moosebooking_limits_max_days_ahead' );
 
-    // Register settings for "Notifications"
-    register_setting('moosebooking_twilio_settings_group', 'moosebooking_twilio_account_sid');
-    register_setting('moosebooking_twilio_settings_group', 'moosebooking_twilio_auth_token');
-    register_setting('moosebooking_twilio_settings_group', 'moosebooking_twilio_to_phone_number');
-    register_setting('moosebooking_twilio_settings_group', 'moosebooking_twilio_from_phone_number');
-    register_setting('moosebooking_twilio_settings_group', 'moosebooking_twilio_sms_notify_admin');
-});
+		// Notifications (Twilio) settings.
+		register_setting( 'moosebooking_twilio_settings_group', 'moosebooking_twilio_account_sid' );
+		register_setting( 'moosebooking_twilio_settings_group', 'moosebooking_twilio_auth_token' );
+		register_setting( 'moosebooking_twilio_settings_group', 'moosebooking_twilio_to_phone_number' );
+		register_setting( 'moosebooking_twilio_settings_group', 'moosebooking_twilio_from_phone_number' );
+		register_setting( 'moosebooking_twilio_settings_group', 'moosebooking_twilio_sms_notify_admin' );
+	}
+);
 
-add_action('admin_enqueue_scripts', function () {
+/**
+ * Enqueue admin scripts and styles.
+ */
+add_action(
+	'admin_enqueue_scripts',
+	function () {
 
-    $screen = get_current_screen();
-    if (!$screen) return;
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return;
+		}
 
-    // Alla sidor i pluginet (med rätt sluggar)
-    $allowed_screens = [
-        'toplevel_page_moosebooking',
-        'booking_page_moosebooking-templates',
-        'booking_page_moosebooking-template-editor',
-        'booking_page_moosebooking-bookings',
-        'booking_page_moosebooking-settings'
-    ];
-    
-    // Gemensam admin-JS för pluginet
-    wp_enqueue_script(
-        'admin-moosebooking-js',
-        MOOSEBOOKING_PLUGIN_URL . 'assets/javascripts/admin-moosebooking.js',
-        [],
-        filemtime(MOOSEBOOKING_PLUGIN_PATH . 'assets/javascripts/admin-moosebooking.js'),
-        true
-    );
-    
-    if (!in_array($screen->id, $allowed_screens)) return;
+		/****************************************************************
+		 * Global resources for all Moose Booking admin pages
+		 ****************************************************************/
+		if ( str_contains( $screen->id, 'moosebooking' ) ) {
 
-    /****************************************************************
-     * Gemensam CSS och JS för pluginet
-     * Denna laddas alltid när någon av pluginets sidor är aktiv
-     **************************************************************/
-    wp_enqueue_style(
-        'admin-moosebooking-css',
-        MOOSEBOOKING_PLUGIN_URL . 'assets/stylesheets/admin-moosebooking.css',
-        [],
-        filemtime(MOOSEBOOKING_PLUGIN_PATH . 'assets/stylesheets/admin-moosebooking.css')
-    );
-    
-    /***************************************************************
-     * Specifik CSS och JS för template-editorn
-     * Denna laddas endast när användaren är på template-editorn
-     **************************************************************/
-    if ($screen->id === 'booking_page_moosebooking-template-editor') {
+			// Global JS.
+			wp_enqueue_script(
+				'moosebooking-admin-global',
+				MOOSEBOOKING_URL . 'assets/javascripts/admin-moosebooking.js',
+				array(),
+				filemtime( MOOSEBOOKING_PATH . 'assets/javascripts/admin-moosebooking.js' ),
+				true
+			);
 
-        // Specifik CSS för template-editorn
-        wp_enqueue_style(
-            'admin-template-editor-css',
-            MOOSEBOOKING_PLUGIN_URL . 'assets/stylesheets/admin-template-editor.css',
-            [],
-            filemtime(MOOSEBOOKING_PLUGIN_PATH . 'assets/stylesheets/admin-template-editor.css')
-        );
-        
-        // Specifik JS för template-editorn
-        wp_enqueue_script(
-            'admin-template-editor-js',
-            MOOSEBOOKING_PLUGIN_URL . 'assets/javascripts/admin-template-editor.js',
-            [],
-            filemtime(MOOSEBOOKING_PLUGIN_PATH . 'assets/javascripts/admin-template-editor.js'),
-            true
-        );
+			// Global CSS (lightweight).
+			wp_enqueue_style(
+				'moosebooking-admin-global',
+				MOOSEBOOKING_URL . 'assets/stylesheets/admin-moosebooking.css',
+				array(),
+				filemtime( MOOSEBOOKING_PATH . 'assets/stylesheets/admin-moosebooking.css' )
+			);
 
-        wp_localize_script('admin-template-editor-js', 'moosebooking_strings', [
-            'type' => __('Type', 'moose-booking'),
-            'price' => __('Price', 'moose-booking'),
-            'comment' => __('Comment', 'moose-booking'),
-            'remove' => __('×', 'moose-booking'),
-            'hourly' => __('Hourly', 'moose-booking'),
-            'daily' => __('Daily', 'moose-booking'),
-            'weekend' => __('Weekend', 'moose-booking'),
-            'weekly' => __('Weekly', 'moose-booking'),
-            'custom' => __('Custom', 'moose-booking'),
-        ]);
-        /***************************************************************
-         * Ladda in lokaliserade variabler för AJAX-anrop
-         * Denna laddas endast när användaren är på template-editorn
-         **************************************************************/
-        wp_localize_script('admin-template-editor-js', 'moosebooking_ajax', [
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce'    => wp_create_nonce('moosebooking_nonce')
-        ]);
-    }
-});
+			// Global AJAX variables (accessible on all pages).
+			wp_localize_script(
+				'moosebooking-admin-global',
+				'moosebooking_ajax',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'moosebooking_nonce' ),
+				)
+			);
+		}
 
-add_filter('submenu_file', function($submenu_file) {
-    if (isset($_GET['page']) && $_GET['page'] === 'moosebooking-template-editor') {
-        return 'moosebooking-templates';
-    }
-    return $submenu_file;
-});
+		/****************************************************************
+		 * Specific resources
+		 ****************************************************************/
+		switch ( $screen->id ) {
 
+			// Template list.
+			/* case 'booking_page_moosebooking-templates':
+				wp_enqueue_script(
+					'moosebooking-admin-template-index',
+					MOOSEBOOKING_URL . 'assets/javascripts/admin-template-index.js',
+					array(),
+					filemtime( MOOSEBOOKING_PATH . 'assets/javascripts/admin-template-index.js' ),
+					true
+				);
+				break; */
 
-add_action('wp_ajax_moosebooking_generate_calendar', function () {
+			// Template editor.
+			case 'booking_page_moosebooking-template-editor':
+				wp_enqueue_style(
+					'moosebooking-admin-template-editor',
+					MOOSEBOOKING_URL . 'assets/stylesheets/admin-template-editor.css',
+					array(),
+					filemtime( MOOSEBOOKING_PATH . 'assets/stylesheets/admin-template-editor.css' )
+				);
 
-    check_ajax_referer('moosebooking_nonce', 'nonce');
+				wp_enqueue_script(
+					'moosebooking-admin-template-editor',
+					MOOSEBOOKING_URL . 'assets/javascripts/admin-template-editor.js',
+					array(),
+					filemtime( MOOSEBOOKING_PATH . 'assets/javascripts/admin-template-editor.js' ),
+					true
+				);
 
-    $year = intval($_POST['year']);
-    $month = intval($_POST['month']);
+				wp_localize_script(
+					'moosebooking-admin-template-editor',
+					'moosebooking_strings',
+					array(
+						'type'    => __( 'Type', 'moose-booking' ),
+						'price'   => __( 'Price', 'moose-booking' ),
+						'comment' => __( 'Comment', 'moose-booking' ),
+						'remove'  => __( '×', 'moose-booking' ),
+						'hourly'  => __( 'Hourly', 'moose-booking' ),
+						'daily'   => __( 'Daily', 'moose-booking' ),
+						'weekend' => __( 'Weekend', 'moose-booking' ),
+						'weekly'  => __( 'Weekly', 'moose-booking' ),
+						'custom'  => __( 'Custom', 'moose-booking' ),
+					)
+				);
+				break;
+		}
+	}
+);
 
-    if (!$year || !$month) {
-        wp_send_json_error('Ogiltigt år eller månad.');
-        wp_die();
-    }
+/**
+ * Highlight correct submenu when editing a template.
+ */
+add_filter(
+	'submenu_file',
+	function ( $submenu_file ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Just reading page param.
+		if ( isset( $_GET['page'] ) && 'moosebooking-template-editor' === sanitize_text_field( wp_unslash( $_GET['page'] ) ) ) {
+			return 'moosebooking-templates';
+		}
+		return $submenu_file;
+	}
+);
 
-    $template_id = intval($_POST['template_id'] ?? 0);
-    $custom_dates = [];
+/**
+ * AJAX: Generate monthly calendar.
+ */
+add_action(
+	'wp_ajax_moosebooking_generate_calendar',
+	function () {
+		check_ajax_referer( 'moosebooking_nonce', 'nonce' );
 
-    // 🟢 Om custom_dates skickades med från JavaScript -> använd dem
-    if (!empty($_POST['custom_dates'])) {
-        $custom_dates = json_decode(stripslashes($_POST['custom_dates']), true) ?: [];
-    }
-    // 🔵 Annars hämta från databasen
-    elseif ($template_id) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'moosebooking_templates';
-        $template = $wpdb->get_row($wpdb->prepare(
-            "SELECT custom_dates FROM $table WHERE id = %d", $template_id
-        ));
-        if ($template && $template->custom_dates) {
-            $custom_dates = json_decode($template->custom_dates, true) ?: [];
-        }
-    }
+		$year  = isset( $_POST['year'] ) ? intval( $_POST['year'] ) : 0;
+		$month = isset( $_POST['month'] ) ? intval( $_POST['month'] ) : 0;
 
-    // ✅ Använd render-funktionen
-    $html = moosebooking_render_calendar($year, $month, $custom_dates);
-    echo $html;
-    wp_die();
-});
+		if ( ! $year || ! $month ) {
+			wp_send_json_error( __( 'Invalid year or month.', 'moose-booking' ) );
+			wp_die();
+		}
 
+		$template_id  = isset( $_POST['template_id'] ) ? intval( $_POST['template_id'] ) : 0;
+		$custom_dates = array();
+
+		// If custom dates provided from JS.
+		if ( ! empty( $_POST['custom_dates'] ) ) {
+			$decoded_data = json_decode( stripslashes( $_POST['custom_dates'] ), true );
+			$custom_dates = is_array( $decoded_data ) ? $decoded_data : array();
+
+		// Otherwise, fetch from DB.
+		} elseif ( $template_id ) {
+			global $wpdb;
+			$table = $wpdb->prefix . 'moosebooking_templates';
+			$template = $wpdb->get_row(
+				$wpdb->prepare( "SELECT custom_dates FROM {$table} WHERE id = %d", $template_id )
+			);
+
+			if ( $template && $template->custom_dates ) {
+				$decoded_data = json_decode( $template->custom_dates, true );
+				$custom_dates = is_array( $decoded_data ) ? $decoded_data : array();
+			}
+		}
+
+		$html = moosebooking_render_calendar( $year, $month, $custom_dates );
+		echo wp_kses_post( $html );
+		wp_die();
+	}
+);

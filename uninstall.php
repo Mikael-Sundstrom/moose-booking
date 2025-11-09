@@ -1,4 +1,7 @@
-<?php if (!defined('WP_UNINSTALL_PLUGIN')) exit;
+<?php
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+	exit;
+}
 
 global $wpdb;
 
@@ -6,4 +9,4 @@ global $wpdb;
 $table_name = $wpdb->prefix . 'moosebooking_templates';
 
 // Radera tabellen
-$wpdb->query("DROP TABLE IF EXISTS $table_name");
+$wpdb->query( "DROP TABLE IF EXISTS $table_name" );

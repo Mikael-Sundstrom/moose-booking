@@ -1,131 +1,177 @@
-console.log('Admin Template Editor JS loaded!');
+/**
+ * Moose Booking – Admin Template Editor
+ * Hanterar veckostandarder, tider, priser, JSON-synk och custom limits.
+ */
+console.log("Admin Template Editor JS loaded (enhanced version)");
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
+	/* ============================================================
+	   🕒 SEKTION 1: LÄGG TILL & TA BORT SLOT-RADER
+	============================================================ */
+	document.querySelectorAll(".add-slot").forEach((btn) => {
+		btn.addEventListener("click", () => {
+			const day = btn.dataset.day;
 
-    let currentDate = new Date();
+			const timeContainer = document.querySelector(
+				`.slots-list[data-day="${day}"]`
+			);
+			const priceContainer = document.querySelector(
+				`.slots-list[data-day="${day}-price"]`
+			);
+			if (!timeContainer || !priceContainer) return;
 
-    // -------- KALENDERRENDERING --------
-    async function renderCalendar(year, month) {
-        const data = new FormData();
-        data.append('action', 'moosebooking_generate_calendar');
-        data.append('year', year);
-        data.append('month', month + 1);
-        data.append('nonce', moosebooking_ajax.nonce);
-        data.append('template_id', document.getElementById('template_id').value);
-    
-        // 🟢 Viktigt: Skicka med custom_dates som finns i inputfältet
-        const customDatesJson = document.getElementById('custom_dates_input').value || '[]';
-        data.append('custom_dates', customDatesJson);
-    
-        try {
-            const response = await fetch(moosebooking_ajax.ajax_url, {
-                method: 'POST',
-                body: data
-            });
-    
-            const responseText = await response.text();
-            document.querySelector('.moosebooking-calendar').innerHTML = responseText;
-            document.getElementById('calendar-month-year').innerText =
-                currentDate.toLocaleString('default', { month: 'long' }) + ' ' + year;
-    
-            attachDayClickHandlers(); // 🟢 Klicka på dagar ska funka efter att ny kalender laddas
-            attachNavigationHandlers(); // 🔵 Navigeringen ska också återanslutas
-    
-        } catch (error) {
-            console.error('Fel vid hämtning av kalender:', error);
-        }
-    }
-    
+			const index = timeContainer.querySelectorAll(".slot-row").length;
 
-    function attachDayClickHandlers() {
-        document.querySelectorAll('.moosebooking-calendar .day').forEach(day => {
-            day.addEventListener('click', () => openDayModal(day));
-        });
-    }
+			// Lägg till tider
+			const timeRow = document.createElement("div");
+			timeRow.classList.add("slot-row");
+			timeRow.innerHTML = `
+				<input type="time" name="weekly_defaults[${day}][slots][${index}][start]" value="08:00">
+				<span>–</span>
+				<input type="time" name="weekly_defaults[${day}][slots][${index}][end]" value="17:00">
+				<button type="button" class="button-link remove-slot">×</button>
+			`;
+			timeContainer.appendChild(timeRow);
 
-    function openDayModal(day) {
-        if (!day || !day.dataset || !day.dataset.date) return;
+			// Lägg till pris
+			const priceRow = document.createElement("div");
+			priceRow.classList.add("slot-row");
+			priceRow.innerHTML = `
+				<input type="number" step="0.01" min="0"
+					name="weekly_defaults[${day}][slots][${index}][price]" value="0"
+					placeholder="0" style="width:80px;">
+			`;
+			priceContainer.appendChild(priceRow);
 
-        const date = day.dataset.date;
-        document.getElementById('custom-day-date').textContent = date;
+			updateBookableCheckboxStates();
+			syncWeeklyDefaultsToJson();
+		});
+	});
 
-        let customDates = JSON.parse(document.getElementById('custom_dates_input').value || '[]');
-        const existing = customDates.find(d => d.date === date);
+	document.addEventListener("click", (e) => {
+		if (e.target.classList.contains("remove-slot")) {
+			const timeRow = e.target.closest(".slot-row");
+			if (!timeRow) return;
 
-        document.getElementById('custom-day-bookable').checked = existing ? existing.bookable : true;
+			const slotsList = timeRow.parentElement;
+			const day = slotsList.dataset.day;
+			const index = Array.from(slotsList.children).indexOf(timeRow);
 
-        // Visa modalen
-        document.getElementById('custom-day-modal').style.display = 'flex';
+			timeRow.remove();
 
-        // Spara
-        document.getElementById('save-custom-day').onclick = () => {
-            const bookable = document.getElementById('custom-day-bookable').checked;
-            const updatedDate = {
-                date: date,
-                bookable: bookable,
-                available: []
-            };
-        
-            const index = customDates.findIndex(d => d.date === date);
-            if (index !== -1) {
-                customDates[index] = updatedDate;
-            } else {
-                customDates.push(updatedDate);
-            }
-        
-            document.getElementById('custom_dates_input').value = JSON.stringify(customDates);
-            document.getElementById('custom-day-modal').style.display = 'none';
-        
-            // Uppdatera klasser
-            day.classList.add('custom-day');
-            if (!bookable) {
-                day.classList.add('unavailable');
-            } else {
-                day.classList.remove('unavailable');
-            }
-        };
-        
+			const priceList = document.querySelector(
+				`.slots-list[data-day="${day}-price"]`
+			);
+			if (priceList && priceList.children[index]) {
+				priceList.children[index].remove();
+			}
 
-        document.getElementById('close-custom-day').onclick = () => {
-            document.getElementById('custom-day-modal').style.display = 'none';
-        };
-    }
+			updateBookableCheckboxStates();
+			syncWeeklyDefaultsToJson();
+		}
+	});
 
-    // Klick utanför modal-content stänger modalen
-    document.getElementById('custom-day-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'custom-day-modal') {
-            document.getElementById('custom-day-modal').style.display = 'none';
-        }
-    });
+	/* ============================================================
+	   🔁 SEKTION 2: JSON-SYNK FÖR VECKOVISA STANDARDER
+	============================================================ */
+	function syncWeeklyDefaultsToJson() {
+		const defaults = {};
+		document.querySelectorAll("tr[data-day]").forEach((row) => {
+			const day = row.dataset.day;
+			const bookable = row.querySelector(
+				"input[type='checkbox']"
+			)?.checked;
+			const slots = [];
 
-    // Escape stänger modalen
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            document.getElementById('custom-day-modal').style.display = 'none';
-        }
-    });
+			const timeRows = row.querySelectorAll(
+				`.slots-list[data-day='${day}'] .slot-row`
+			);
+			timeRows.forEach((timeRow, i) => {
+				const start =
+					timeRow.querySelector("input[name*='[start]']")?.value ||
+					"";
+				const end =
+					timeRow.querySelector("input[name*='[end]']")?.value || "";
+				const priceInput = row.querySelectorAll(
+					`.slots-list[data-day='${day}-price'] .slot-row input`
+				)[i];
+				const price = parseFloat(priceInput?.value || 0);
+				slots.push({ start, end, price });
+			});
 
-    // -------- NAVIGATION --------
-    function attachNavigationHandlers() {
-        const prev = document.getElementById('prev-month');
-        const next = document.getElementById('next-month');
+			defaults[day] = { bookable, slots };
+		});
 
-        if (prev) {
-            prev.onclick = () => {
-                currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-                renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
-            };
-        }
+		document.getElementById("weekly_defaults_json").value =
+			JSON.stringify(defaults);
+	}
 
-        if (next) {
-            next.onclick = () => {
-                currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-                renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
-            };
-        }
-    }
+	function updateBookableCheckboxStates() {
+		document.querySelectorAll("tr[data-day]").forEach((row) => {
+			const day = row.dataset.day;
+			const checkbox = row.querySelector("input[type='checkbox']");
+			const timeRows = row.querySelectorAll(
+				`.slots-list[data-day='${day}'] .slot-row`
+			);
 
-    // Första rendering
-    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+			if (!checkbox) return;
 
+			if (timeRows.length === 0) {
+				checkbox.checked = false;
+				checkbox.disabled = true;
+			} else {
+				checkbox.disabled = false;
+			}
+		});
+	}
+
+	/* ============================================================
+	   ⚙️ SEKTION 3: HANTERA CUSTOM LIMITS (override_limits)
+	============================================================ */
+	const overrideCheckbox = document.getElementById("override_limits");
+	const maxDaysField = document.getElementById("max_days_ahead");
+	const minHoursField = document.getElementById("min_hours_before");
+
+	// ⚠️ Gör att "Max dagar" och "Min timmar" är gråade tills man bockar i override.
+	function toggleLimitFields() {
+		if (!overrideCheckbox) return;
+
+		const disabled = !overrideCheckbox.checked;
+		[maxDaysField, minHoursField].forEach((field) => {
+			if (field) {
+				field.disabled = disabled;
+				field.closest("tr").style.opacity = disabled ? "0.5" : "1";
+
+				// Visa globalt värde om inaktiv, annars lokalt
+				const globalVal = field.dataset.globalValue;
+				const localVal = field.dataset.localValue;
+				field.value = disabled ? globalVal : localVal;
+			}
+		});
+	}
+
+	if (overrideCheckbox) {
+		overrideCheckbox.addEventListener("change", toggleLimitFields);
+		toggleLimitFields(); // Init vid laddning
+	}
+
+	/* ============================================================
+	   💾 SEKTION 4: JSON-UPPDATERING VID ÄNDRING
+	============================================================ */
+	document.addEventListener("change", (e) => {
+		// Hoppa över override-checkboxen (den styr bara UI)
+		if (e.target.id === "override_limits") return;
+
+		if (
+			e.target.matches("input[type='checkbox']") ||
+			e.target.matches("input[type='time']") ||
+			e.target.matches("input[type='number']")
+		) {
+			syncWeeklyDefaultsToJson();
+		}
+	});
+
+	// Init vid sidladdning
+	syncWeeklyDefaultsToJson();
+	updateBookableCheckboxStates();
 });

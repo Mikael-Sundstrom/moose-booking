@@ -1,0 +1,38 @@
+{
+	"files.exclude": {
+		"**/.vscode": true,
+		"**/.git": true,
+		"**/.gitignore": true,
+		"**/.distignore": true,
+		"**/.editorconfig": true,
+		"**/.phpcs.xml.dist": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/.DS_Store": true,
+		"**/composer.lock": true,
+		"**/Thumbs.db": true,
+		"**/vendor": true,
+		"**/LICENSE": true
+	},
+	"files.eol": "\n",
+	"editor.insertSpaces": false,
+	"editor.detectIndentation": false,
+	// Använd som formatter + spara automatiskt
+	"[php]": {
+		"editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
+	},
+	"intelephense.environment.phpVersion": "8.4",
+	"intelephense.format.enable": false,
+	"intelephense.files.maxSize": 5000000,
+	"intelephense.stubs": [
+		"standard",
+		"wordpress",
+		"Core",
+		"pcre",
+		"superglobals",
+		"date",
+		"json",
+		"mbstring",
+		"filter"
+	]
+}

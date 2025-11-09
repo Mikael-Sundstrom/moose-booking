@@ -1,0 +1,51 @@
+{
+	"name": "mikael-sundstrom/moose-booking",
+	"type": "wordpress-plugin",
+	"autoload": {
+		"psr-4": {
+			"MooseBooking\\": "includes/"
+		}
+	},
+	"require-dev": {
+		"squizlabs/php_codesniffer": "^3.10",
+		"wp-coding-standards/wpcs": "^3.1",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+		"php-stubs/wordpress-stubs": "^6.8",
+		"phpcompatibility/phpcompatibility-wp": "^2.1",
+		"sirbrillig/phpcs-variable-analysis": "^2.12"
+	},
+	"scripts": {
+		"i18n:pot": "wp i18n make-pot . languages/moose-booking.pot --exclude=vendor",
+		"i18n:init-sv_SE": "test -f languages/moose-booking-sv_SE.po || cp languages/moose-booking.pot languages/moose-booking-sv_SE.po",
+		"i18n:init-de_DE": "test -f languages/moose-booking-de_DE.po || cp languages/moose-booking.pot languages/moose-booking-de_DE.po",
+		"i18n:init-fr_FR": "test -f languages/moose-booking-fr_FR.po || cp languages/moose-booking.pot languages/moose-booking-fr_FR.po",
+		"i18n:init-es_ES": "test -f languages/moose-booking-es_ES.po || cp languages/moose-booking.pot languages/moose-booking-es_ES.po",
+		"i18n:init-hi_IN": "test -f languages/moose-booking-hi_IN.po || cp languages/moose-booking.pot languages/moose-booking-hi_IN.po",
+		"i18n:init-it_IT": "test -f languages/moose-booking-it_IT.po || cp languages/moose-booking.pot languages/moose-booking-it_IT.po",
+		"i18n:init-nl_NL": "test -f languages/moose-booking-nl_NL.po || cp languages/moose-booking.pot languages/moose-booking-nl_NL.po",
+		"i18n:init-pt_BR": "test -f languages/moose-booking-pt_BR.po || cp languages/moose-booking.pot languages/moose-booking-pt_BR.po",
+		"i18n:init-zh_CN": "test -f languages/moose-booking-zh_CN.po || cp languages/moose-booking.pot languages/moose-booking-zh_CN.po",
+		"i18n:init-zh_TW": "test -f languages/moose-booking-zh_TW.po || cp languages/moose-booking.pot languages/moose-booking-zh_TW.po",
+		"i18n:all": [
+			"@i18n:pot",
+			"@i18n:init-sv_SE",
+			"@i18n:init-de_DE",
+			"@i18n:init-fr_FR",
+			"@i18n:init-es_ES",
+			"@i18n:init-hi_IN",
+			"@i18n:init-it_IT",
+			"@i18n:init-nl_NL",
+			"@i18n:init-pt_BR",
+			"@i18n:init-zh_CN",
+			"@i18n:init-zh_TW"
+		],
+		"create-zip": "wp dist-archive . ./moose-booking.zip --format=zip",
+		"cs": "phpcs --standard=WordPress --extensions=php --ignore=vendor .",
+		"cbf": "phpcbf --standard=WordPress --extensions=php --ignore=vendor ."
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	}
+}

@@ -1,0 +1,33 @@
+{
+	"mon": {
+		"bookable": true,
+		"slots": [
+			{ "start": "08:00", "end": "17:00", "price": 5002 },
+			{ "start": "17:00", "end": "00:00", "price": 1200 }
+		]
+	},
+	"tue": {
+		"bookable": true,
+		"slots": [
+			{ "start": "08:00", "end": "17:00", "price": 600 },
+			{ "start": "08:00", "end": "17:00", "price": 0 }
+		]
+	},
+	"wed": {
+		"bookable": true,
+		"slots": [{ "start": "08:00", "end": "17:00", "price": 333 }]
+	},
+	"thu": {
+		"bookable": true,
+		"slots": [{ "start": "08:00", "end": "17:00", "price": 0 }]
+	},
+	"fri": {
+		"bookable": false,
+		"slots": [{ "start": "08:00", "end": "17:00", "price": 0 }]
+	},
+	"sat": { "bookable": false, "slots": [] },
+	"sun": {
+		"bookable": false,
+		"slots": [{ "start": "08:00", "end": "17:00", "price": 0 }]
+	}
+}

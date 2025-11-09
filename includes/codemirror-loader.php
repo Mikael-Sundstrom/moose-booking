@@ -1,9 +1,12 @@
-<?php if (!defined('ABSPATH')) exit;
-
+<?php
 /**
- * codemirror-loader.php
  * Enqueue CodeMirror scripts and styles dynamically.
+ *
+ * @file includes/codemirror-loader.php
+ * @package moose-booking
  */
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Enqueue CodeMirror scripts and styles dynamically.
@@ -12,23 +15,25 @@
  *
  * @return void
  */
-add_action('admin_enqueue_scripts', function () {
+add_action(
+	'admin_enqueue_scripts',
+	function () {
 
-	// Only load for the CSS and Script tabs
-	$allowed_tabs = ['css', 'scripts'];
+		// Only load for the CSS and Script tabs
+		$allowed_tabs = array( 'css', 'scripts' );
 
-	if (!in_array(moosebooking_get_current_tab(), $allowed_tabs, true)) {
-		return;
-	}
+		if ( ! in_array( moosebooking_get_current_tab(), $allowed_tabs, true ) ) {
+			return;
+		}
 
-    // Enqueue CodeMirror only if needed
-    wp_enqueue_code_editor([]);
-    wp_enqueue_script('code-editor');
+		// Enqueue CodeMirror only if needed
+		wp_enqueue_code_editor( array() );
+		wp_enqueue_script( 'code-editor' );
 
-    // Add inline script to initialize CodeMirror
-    wp_add_inline_script(
-        'code-editor',
-        '
+		// Add inline script to initialize CodeMirror
+		wp_add_inline_script(
+			'code-editor',
+			'
         document.addEventListener("DOMContentLoaded", function () {
             const textareas = document.querySelectorAll(".moosebooking-code-editor");
 
@@ -50,5 +55,6 @@ add_action('admin_enqueue_scripts', function () {
             });
         });
         '
-    );
-});
+		);
+	}
+);
